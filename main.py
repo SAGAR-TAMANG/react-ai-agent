@@ -47,7 +47,6 @@ You then output:
 
 Answer: A bulldog weights 51 lbs
 """.strip()
-action_re = re.compile('^Action: (\w+): (.*)$')   # python regular expression to selection action
 
 class Agent:
   def __init__(self, system=''):
@@ -84,7 +83,7 @@ class Agent:
 
   def execute(self, messages):
     response = self.chat.send_message(messages)
-    return response
+    return response.text
   
   def calculate(what):
     return eval(what)
@@ -104,10 +103,11 @@ class Agent:
       "average_dog_weight": average_dog_weight
   }
 
-abot = Agent(prompt)
+action_re = re.compile('^Action: (\w+): (.*)$')   # python regular expression to selection action
 
-result = abot('How much does a toy poodle weigh?')
-print(result)
+# abot = Agent(prompt)
+# result = abot('How much does a toy poodle weigh?')
+# print(result)
 
 def query(question, max_turns=5):
   i = 0
@@ -115,15 +115,33 @@ def query(question, max_turns=5):
   next_prompt = question
   while i < max_turns:
     result = bot(next_prompt)
-    actions = [
-      action_re.match(a)
-      for a in result.split('\n')
-      if action_re.match(a)
-    ]
-    i -+ 1
+    try:
+      actions = [
+        action_re.match(a)
+        for a in result.split('\n')
+        if action_re.match(a)
+      ]
+    except:
+       print('EXCEPTION OCCURED AT actions')
 
+    if actions:
+      #  Action found to run
+      print(actions)
+      print(actions[0].group())
+      print(actions[0].groups())
+      action, actions_input = actions[0].groups()
 
+      if action not in known_actions:
+         raise Exception(f'Unknown action: {action, actions_input}')
+      print(f'-- running {action} {actions_input}')
+      Observation = known_actions[action](actions_input)
+      print("Observation:", Observation)
+      next_prompt(Observation)
+    else:
+      return
+      
 
+query('How much does a toy poodle weigh?')
 
 # if __name__ == "__main__":
 #   main()
