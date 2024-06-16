@@ -61,9 +61,9 @@ class Agent:
         'role': 'user'
       })
     
-    self.chat = model.start_chat(history=self.messages)
-  
   def __call__(self, messages):
+    self.chat = model.start_chat(history=self.messages)
+    
     result = self.execute(messages)
 
     self.messages.append({
@@ -115,6 +115,7 @@ def query(question, max_turns=5):
   next_prompt = question
   while i < max_turns:
     result = bot(next_prompt)
+    print(result)
     try:
       actions = [
         action_re.match(a)
@@ -126,22 +127,19 @@ def query(question, max_turns=5):
 
     if actions:
       #  Action found to run
-      print(actions)
-      print(actions[0].group())
-      print(actions[0].groups())
       action, actions_input = actions[0].groups()
 
-      if action not in known_actions:
+      if action not in bot.known_actions:
          raise Exception(f'Unknown action: {action, actions_input}')
       print(f'-- running {action} {actions_input}')
-      Observation = known_actions[action](actions_input)
+      Observation = bot.known_actions[action](actions_input)
       print("Observation:", Observation)
-      next_prompt(Observation)
+      next_prompt = f"Observation: {Observation}"
     else:
       return
-      
 
-query('How much does a toy poodle weigh?')
+# query('How much does a toy poodle weigh?')
+query('I have 2 dogs, a border collie and /a scottish terrier. What is their combined weight')
 
 # if __name__ == "__main__":
 #   main()
